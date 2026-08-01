@@ -26,7 +26,21 @@ const SFX_SWITCH_PATH := "res://assets/kenney_ui-pack/Sounds/switch-a.ogg"
 var _sfx_click: AudioStreamPlayer
 var _sfx_switch: AudioStreamPlayer
 
+# kenney_tiny-farm tile indices (1-based, see farm_map.gd for sheet layout), verified visually.
+# greenhouse/processing reuse the barn wall tile as a placeholder (no dedicated sprite in the pack).
+const BUSINESS_ICON_TILES := {
+	"corn": 33,
+	"wheat": 69,
+	"livestock": 122,
+	"greenhouse": 92,
+	"processing": 92,
+}
+
+var farm_tilemap_tex: Texture2D
+
 func _ready() -> void:
+	if ResourceLoader.exists("res://assets/kenney_tiny-farm/Tilemap/tilemap_packed.png"):
+		farm_tilemap_tex = load("res://assets/kenney_tiny-farm/Tilemap/tilemap_packed.png")
 	for style_key in BUTTON_TEXTURE_PATHS:
 		var path: String = BUTTON_TEXTURE_PATHS[style_key]
 		if not ResourceLoader.exists(path):
@@ -259,11 +273,13 @@ func _draw_lahan_tab() -> void:
 		var card_y = 165 + i * 105
 		draw_rect(Rect2(545, card_y, 445, 95), Color(0.08, 0.11, 0.07, 1.0), true)
 
+		_draw_business_icon(b.id, Rect2(552, card_y + 12, 64, 64))
+
 		var name_str = "%s (LVL %d)" % [b.name, b.level]
-		draw_string(ThemeDB.fallback_font, Vector2(555, card_y + 24), name_str, HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color.WHITE)
+		draw_string(ThemeDB.fallback_font, Vector2(625, card_y + 24), name_str, HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color.WHITE)
 
 		var info_str = "PANEN: %.1f P | GPS: %.1f P/S" % [b.income(), b.get_gps()]
-		draw_string(ThemeDB.fallback_font, Vector2(555, card_y + 46), info_str, HORIZONTAL_ALIGNMENT_LEFT, -1, 11, Color(0.55, 0.76, 0.29, 1.0))
+		draw_string(ThemeDB.fallback_font, Vector2(625, card_y + 46), info_str, HORIZONTAL_ALIGNMENT_LEFT, -1, 11, Color(0.55, 0.76, 0.29, 1.0))
 
 		# Upgrade Button
 		var buy_txt = ""
@@ -288,8 +304,10 @@ func _draw_upgrade_tab() -> void:
 		var card_y = 140 + i * 95
 		draw_rect(Rect2(545, card_y, 445, 82), Color(0.08, 0.11, 0.07, 1.0), true)
 
-		draw_string(ThemeDB.fallback_font, Vector2(555, card_y + 24), "⚡ " + u.name, HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color(1.0, 0.76, 0.03, 1.0))
-		draw_string(ThemeDB.fallback_font, Vector2(555, card_y + 48), u.description, HORIZONTAL_ALIGNMENT_LEFT, -1, 11, Color(0.8, 0.8, 0.8, 1.0))
+		_draw_business_icon(u.target_business_id, Rect2(552, card_y + 15, 52, 52))
+
+		draw_string(ThemeDB.fallback_font, Vector2(615, card_y + 24), "⚡ " + u.name, HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color(1.0, 0.76, 0.03, 1.0))
+		draw_string(ThemeDB.fallback_font, Vector2(615, card_y + 48), u.description, HORIZONTAL_ALIGNMENT_LEFT, -1, 11, Color(0.8, 0.8, 0.8, 1.0))
 
 		var txt = "TERBELI" if u.is_purchased else ("BELI %.1fP" % u.cost)
 		var style = "blue" if u.is_purchased else ("yellow" if bal >= u.cost else "grey")
@@ -303,8 +321,10 @@ func _draw_mandor_tab() -> void:
 		var card_y = 140 + i * 95
 		draw_rect(Rect2(545, card_y, 445, 82), Color(0.08, 0.11, 0.07, 1.0), true)
 
-		draw_string(ThemeDB.fallback_font, Vector2(555, card_y + 24), "👨‍🌾 " + m.name, HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color(0.55, 0.76, 0.29, 1.0))
-		draw_string(ThemeDB.fallback_font, Vector2(555, card_y + 48), m.description, HORIZONTAL_ALIGNMENT_LEFT, -1, 11, Color(0.8, 0.8, 0.8, 1.0))
+		_draw_business_icon(m.target_business_id, Rect2(552, card_y + 15, 52, 52))
+
+		draw_string(ThemeDB.fallback_font, Vector2(615, card_y + 24), "👨‍🌾 " + m.name, HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color(0.55, 0.76, 0.29, 1.0))
+		draw_string(ThemeDB.fallback_font, Vector2(615, card_y + 48), m.description, HORIZONTAL_ALIGNMENT_LEFT, -1, 11, Color(0.8, 0.8, 0.8, 1.0))
 
 		var txt = "DIREKRUT" if m.is_hired else ("REKRUT %.1fP" % m.cost)
 		var style = "blue" if m.is_hired else ("yellow" if bal >= m.cost else "grey")
@@ -340,6 +360,17 @@ func _draw_festival_tab() -> void:
 	var txt = "KLAIM +%d ANGEL" % claimable if claimable > 0 else "PROGRES BELUM CUKUP"
 	var style = "yellow" if claimable > 0 else "grey"
 	_draw_button(Rect2(570, 360, 400, 60), txt, style, Color.BLACK if claimable > 0 else Color.WHITE)
+
+func _draw_business_icon(business_id: String, rect: Rect2) -> void:
+	if farm_tilemap_tex == null or not BUSINESS_ICON_TILES.has(business_id):
+		return
+	var index: int = BUSINESS_ICON_TILES[business_id]
+	var i := index - 1
+	var col := i % 12
+	@warning_ignore("integer_division")
+	var row := i / 12
+	var src := Rect2(col * 17, row * 17, 16, 16)
+	draw_texture_rect_region(farm_tilemap_tex, rect, src)
 
 func _draw_button(rect: Rect2, label: String, style: String, txt_color: Color) -> void:
 	if _button_styles.has(style):
