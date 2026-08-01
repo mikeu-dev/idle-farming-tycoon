@@ -22,6 +22,7 @@ var farm_zones = [
 # Kenney Tile textures
 var farm_tilemap_tex: Texture2D
 var town_tilemap_tex: Texture2D
+var _font: Font = ThemeDB.fallback_font
 
 func _ready() -> void:
 	# Load pre-packaged tilemaps
@@ -29,6 +30,8 @@ func _ready() -> void:
 		farm_tilemap_tex = load("res://assets/kenney_tiny-farm/Tilemap/tilemap_packed.png")
 	if ResourceLoader.exists("res://assets/kenney_tiny-town/Tilemap/tilemap_packed.png"):
 		town_tilemap_tex = load("res://assets/kenney_tiny-town/Tilemap/tilemap_packed.png")
+	if ResourceLoader.exists("res://assets/kenney_ui-pack/Font/Kenney Future.ttf"):
+		_font = load("res://assets/kenney_ui-pack/Font/Kenney Future.ttf")
 
 func setup(eng: IdleEngine) -> void:
 	engine_ref = eng
@@ -64,7 +67,7 @@ func _draw() -> void:
 
 	# Title Banner
 	draw_rect(Rect2(20, 95, 495, 26), Color(0.08, 0.11, 0.07, 1.0), true)
-	draw_string(ThemeDB.fallback_font, Vector2(35, 114), "DUNIA PERTANIAN 2D (GODOT 4 ENGINE)", HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color(1.0, 0.76, 0.03, 1.0))
+	draw_string(_font, Vector2(35, 114), "DUNIA PERTANIAN 2D (GODOT 4 ENGINE)", HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color(1.0, 0.76, 0.03, 1.0))
 
 	if engine_ref == null:
 		return
@@ -105,7 +108,7 @@ func _draw() -> void:
 		if not biz.is_owned():
 			status_str = "%s [BELUM DIBELI]" % biz.name
 
-		draw_string(ThemeDB.fallback_font, Vector2(z_rect.position.x + 230, z_rect.position.y + 26), status_str, HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color.WHITE)
+		draw_string(_font, Vector2(z_rect.position.x + 230, z_rect.position.y + 26), status_str, HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color.WHITE)
 
 		# Progress Bar
 		var prog_ratio = biz.get_progress_ratio()
@@ -116,7 +119,7 @@ func _draw() -> void:
 			draw_rect(fill_rect, Color(0.30, 0.69, 0.31, 1.0), true)
 
 		var prog_txt = "%.0f%%" % (prog_ratio * 100.0)
-		draw_string(ThemeDB.fallback_font, Vector2(z_rect.position.x + 330, z_rect.position.y + 55), prog_txt, HORIZONTAL_ALIGNMENT_LEFT, -1, 11, Color.WHITE)
+		draw_string(_font, Vector2(z_rect.position.x + 330, z_rect.position.y + 55), prog_txt, HORIZONTAL_ALIGNMENT_LEFT, -1, 11, Color.WHITE)
 
 		# Action Hint
 		var action_hint = "👉 KLIK UNTUK PANEN"
@@ -124,4 +127,4 @@ func _draw() -> void:
 			action_hint = "⚙️ OTOMATISASI PANEN"
 		elif not biz.is_owned():
 			action_hint = "🔒 BELI LAHAN DI PANEL KANAN"
-		draw_string(ThemeDB.fallback_font, Vector2(z_rect.position.x + 230, z_rect.position.y + 82), action_hint, HORIZONTAL_ALIGNMENT_LEFT, -1, 11, Color(1.0, 0.76, 0.03, 1.0))
+		draw_string(_font, Vector2(z_rect.position.x + 230, z_rect.position.y + 82), action_hint, HORIZONTAL_ALIGNMENT_LEFT, -1, 11, Color(1.0, 0.76, 0.03, 1.0))

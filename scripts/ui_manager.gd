@@ -37,10 +37,13 @@ const BUSINESS_ICON_TILES := {
 }
 
 var farm_tilemap_tex: Texture2D
+var _font: Font = ThemeDB.fallback_font
 
 func _ready() -> void:
 	if ResourceLoader.exists("res://assets/kenney_tiny-farm/Tilemap/tilemap_packed.png"):
 		farm_tilemap_tex = load("res://assets/kenney_tiny-farm/Tilemap/tilemap_packed.png")
+	if ResourceLoader.exists("res://assets/kenney_ui-pack/Font/Kenney Future.ttf"):
+		_font = load("res://assets/kenney_ui-pack/Font/Kenney Future.ttf")
 	for style_key in BUTTON_TEXTURE_PATHS:
 		var path: String = BUTTON_TEXTURE_PATHS[style_key]
 		if not ResourceLoader.exists(path):
@@ -208,11 +211,11 @@ func _draw() -> void:
 	draw_rect(Rect2(0, 0, 1024, 85), Color(0.08, 0.11, 0.07, 1.0), true)
 	draw_rect(Rect2(0, 83, 1024, 2), Color(0.55, 0.76, 0.29, 1.0), true)
 
-	draw_string(ThemeDB.fallback_font, Vector2(55, 32), "IDLE FARMING TYCOON (GODOT 4)", HORIZONTAL_ALIGNMENT_LEFT, -1, 18, Color(1.0, 0.76, 0.03, 1.0))
+	draw_string(_font, Vector2(55, 32), "IDLE FARMING TYCOON (GODOT 4)", HORIZONTAL_ALIGNMENT_LEFT, -1, 18, Color(1.0, 0.76, 0.03, 1.0))
 
 	# Wallet Balance & GPS
 	var bal_str = "SALDO: %.2f POIN" % engine_ref.wallet.balance()
-	draw_string(ThemeDB.fallback_font, Vector2(55, 54), bal_str, HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color.WHITE)
+	draw_string(_font, Vector2(55, 54), bal_str, HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color.WHITE)
 
 	var total_gps: float = 0.0
 	for b in engine_ref.businesses:
@@ -220,7 +223,7 @@ func _draw() -> void:
 
 	var angel_bonus: float = float(engine_ref.angels) * 5.0
 	var status_str = "HASIL/DETIK: %.2f P/S | ANGEL: %d (+%.0f%%)" % [total_gps, engine_ref.angels, angel_bonus]
-	draw_string(ThemeDB.fallback_font, Vector2(55, 74), status_str, HORIZONTAL_ALIGNMENT_LEFT, -1, 11, Color(0.55, 0.76, 0.29, 1.0))
+	draw_string(_font, Vector2(55, 74), status_str, HORIZONTAL_ALIGNMENT_LEFT, -1, 11, Color(0.55, 0.76, 0.29, 1.0))
 
 	# Super Boost & Time Warp Buttons
 	var boost_txt = "BOOST 2X"
@@ -252,12 +255,12 @@ func _draw() -> void:
 	# Bottom Notification Bar
 	if Time.get_unix_time_from_system() < notification_expiry and notification_msg != "":
 		draw_rect(Rect2(0, 735, 1024, 33), Color(1.0, 0.76, 0.03, 1.0), true)
-		draw_string(ThemeDB.fallback_font, Vector2(20, 757), "📢 " + notification_msg, HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color(0.08, 0.11, 0.07, 1.0))
+		draw_string(_font, Vector2(20, 757), "📢 " + notification_msg, HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color(0.08, 0.11, 0.07, 1.0))
 
 	# Floating Text FX
 	for ft in floating_texts:
 		var c = Color(0.30, 0.69, 0.31, ft["alpha"])
-		draw_string(ThemeDB.fallback_font, ft["pos"], ft["text"], HORIZONTAL_ALIGNMENT_LEFT, -1, 14, c)
+		draw_string(_font, ft["pos"], ft["text"], HORIZONTAL_ALIGNMENT_LEFT, -1, 14, c)
 
 func _draw_lahan_tab() -> void:
 	# Buy Mode Toggle Button
@@ -276,10 +279,10 @@ func _draw_lahan_tab() -> void:
 		_draw_business_icon(b.id, Rect2(552, card_y + 12, 64, 64))
 
 		var name_str = "%s (LVL %d)" % [b.name, b.level]
-		draw_string(ThemeDB.fallback_font, Vector2(625, card_y + 24), name_str, HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color.WHITE)
+		draw_string(_font, Vector2(625, card_y + 24), name_str, HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color.WHITE)
 
 		var info_str = "PANEN: %.1f P | GPS: %.1f P/S" % [b.income(), b.get_gps()]
-		draw_string(ThemeDB.fallback_font, Vector2(625, card_y + 46), info_str, HORIZONTAL_ALIGNMENT_LEFT, -1, 11, Color(0.55, 0.76, 0.29, 1.0))
+		draw_string(_font, Vector2(625, card_y + 46), info_str, HORIZONTAL_ALIGNMENT_LEFT, -1, 11, Color(0.55, 0.76, 0.29, 1.0))
 
 		# Upgrade Button
 		var buy_txt = ""
@@ -306,8 +309,8 @@ func _draw_upgrade_tab() -> void:
 
 		_draw_business_icon(u.target_business_id, Rect2(552, card_y + 15, 52, 52))
 
-		draw_string(ThemeDB.fallback_font, Vector2(615, card_y + 24), "⚡ " + u.name, HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color(1.0, 0.76, 0.03, 1.0))
-		draw_string(ThemeDB.fallback_font, Vector2(615, card_y + 48), u.description, HORIZONTAL_ALIGNMENT_LEFT, -1, 11, Color(0.8, 0.8, 0.8, 1.0))
+		draw_string(_font, Vector2(615, card_y + 24), "⚡ " + u.name, HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color(1.0, 0.76, 0.03, 1.0))
+		draw_string(_font, Vector2(615, card_y + 48), u.description, HORIZONTAL_ALIGNMENT_LEFT, -1, 11, Color(0.8, 0.8, 0.8, 1.0))
 
 		var txt = "TERBELI" if u.is_purchased else ("BELI %.1fP" % u.cost)
 		var style = "blue" if u.is_purchased else ("yellow" if bal >= u.cost else "grey")
@@ -323,8 +326,8 @@ func _draw_mandor_tab() -> void:
 
 		_draw_business_icon(m.target_business_id, Rect2(552, card_y + 15, 52, 52))
 
-		draw_string(ThemeDB.fallback_font, Vector2(615, card_y + 24), "👨‍🌾 " + m.name, HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color(0.55, 0.76, 0.29, 1.0))
-		draw_string(ThemeDB.fallback_font, Vector2(615, card_y + 48), m.description, HORIZONTAL_ALIGNMENT_LEFT, -1, 11, Color(0.8, 0.8, 0.8, 1.0))
+		draw_string(_font, Vector2(615, card_y + 24), "👨‍🌾 " + m.name, HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color(0.55, 0.76, 0.29, 1.0))
+		draw_string(_font, Vector2(615, card_y + 48), m.description, HORIZONTAL_ALIGNMENT_LEFT, -1, 11, Color(0.8, 0.8, 0.8, 1.0))
 
 		var txt = "DIREKRUT" if m.is_hired else ("REKRUT %.1fP" % m.cost)
 		var style = "blue" if m.is_hired else ("yellow" if bal >= m.cost else "grey")
@@ -337,8 +340,8 @@ func _draw_prestasi_tab() -> void:
 		var card_y = 140 + i * 95
 		draw_rect(Rect2(545, card_y, 445, 82), Color(0.08, 0.11, 0.07, 1.0), true)
 
-		draw_string(ThemeDB.fallback_font, Vector2(555, card_y + 24), "🏆 " + a.name, HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color(1.0, 0.76, 0.03, 1.0))
-		draw_string(ThemeDB.fallback_font, Vector2(555, card_y + 48), a.description, HORIZONTAL_ALIGNMENT_LEFT, -1, 11, Color(0.8, 0.8, 0.8, 1.0))
+		draw_string(_font, Vector2(555, card_y + 24), "🏆 " + a.name, HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color(1.0, 0.76, 0.03, 1.0))
+		draw_string(_font, Vector2(555, card_y + 48), a.description, HORIZONTAL_ALIGNMENT_LEFT, -1, 11, Color(0.8, 0.8, 0.8, 1.0))
 
 		var txt = "TERCAPAI" if a.is_unlocked else "BELUM"
 		var style = "green" if a.is_unlocked else "grey"
@@ -346,16 +349,16 @@ func _draw_prestasi_tab() -> void:
 
 func _draw_festival_tab() -> void:
 	draw_rect(Rect2(545, 140, 445, 450), Color(0.08, 0.11, 0.07, 1.0), true)
-	draw_string(ThemeDB.fallback_font, Vector2(620, 175), "FESTIVAL PANEN RAYA", HORIZONTAL_ALIGNMENT_LEFT, -1, 18, Color(1.0, 0.76, 0.03, 1.0))
+	draw_string(_font, Vector2(620, 175), "FESTIVAL PANEN RAYA", HORIZONTAL_ALIGNMENT_LEFT, -1, 18, Color(1.0, 0.76, 0.03, 1.0))
 
-	draw_string(ThemeDB.fallback_font, Vector2(560, 210), "Gelar Festival Panen Raya untuk mereset lahan", HORIZONTAL_ALIGNMENT_LEFT, -1, 12, Color.WHITE)
-	draw_string(ThemeDB.fallback_font, Vector2(560, 230), "tetapi dapatkan Angel Investor permanen!", HORIZONTAL_ALIGNMENT_LEFT, -1, 12, Color.WHITE)
+	draw_string(_font, Vector2(560, 210), "Gelar Festival Panen Raya untuk mereset lahan", HORIZONTAL_ALIGNMENT_LEFT, -1, 12, Color.WHITE)
+	draw_string(_font, Vector2(560, 230), "tetapi dapatkan Angel Investor permanen!", HORIZONTAL_ALIGNMENT_LEFT, -1, 12, Color.WHITE)
 
 	var owned = engine_ref.angels
 	var claimable = engine_ref.calculate_angels_to_claim()
 
-	draw_string(ThemeDB.fallback_font, Vector2(560, 270), "ANGEL DIMILIKI: %d (+%.0f%%)" % [owned, float(owned)*5.0], HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color(0.55, 0.76, 0.29, 1.0))
-	draw_string(ThemeDB.fallback_font, Vector2(560, 295), "KLAIM ANGEL BARU: +%d" % claimable, HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color(1.0, 0.76, 0.03, 1.0))
+	draw_string(_font, Vector2(560, 270), "ANGEL DIMILIKI: %d (+%.0f%%)" % [owned, float(owned)*5.0], HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color(0.55, 0.76, 0.29, 1.0))
+	draw_string(_font, Vector2(560, 295), "KLAIM ANGEL BARU: +%d" % claimable, HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color(1.0, 0.76, 0.03, 1.0))
 
 	var txt = "KLAIM +%d ANGEL" % claimable if claimable > 0 else "PROGRES BELUM CUKUP"
 	var style = "yellow" if claimable > 0 else "grey"
@@ -379,4 +382,4 @@ func _draw_button(rect: Rect2, label: String, style: String, txt_color: Color) -
 		draw_rect(rect, Color(0.3, 0.3, 0.3, 1.0), true)
 		draw_rect(rect, Color.WHITE, false, 1.0)
 	var text_pos = Vector2(rect.position.x + (rect.size.x / 2.0) - (label.length() * 3.5), rect.position.y + (rect.size.y / 2.0) + 4)
-	draw_string(ThemeDB.fallback_font, text_pos, label, HORIZONTAL_ALIGNMENT_LEFT, -1, 12, txt_color)
+	draw_string(_font, text_pos, label, HORIZONTAL_ALIGNMENT_LEFT, -1, 12, txt_color)
