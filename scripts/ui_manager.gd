@@ -11,6 +11,28 @@ var notification_expiry: float = 0.0
 
 var floating_texts: Array = []
 
+const BUTTON_TEXTURE_PATHS := {
+	"green": "res://assets/kenney_ui-pack/PNG/Green/Default/button_rectangle_depth_gradient.png",
+	"yellow": "res://assets/kenney_ui-pack/PNG/Yellow/Default/button_rectangle_depth_gradient.png",
+	"grey": "res://assets/kenney_ui-pack/PNG/Grey/Default/button_rectangle_depth_gradient.png",
+	"blue": "res://assets/kenney_ui-pack/PNG/Blue/Default/button_rectangle_depth_gradient.png",
+}
+
+var _button_styles: Dictionary = {}
+
+func _ready() -> void:
+	for style_key in BUTTON_TEXTURE_PATHS:
+		var path: String = BUTTON_TEXTURE_PATHS[style_key]
+		if not ResourceLoader.exists(path):
+			continue
+		var sbt := StyleBoxTexture.new()
+		sbt.texture = load(path)
+		sbt.texture_margin_left = 14
+		sbt.texture_margin_right = 14
+		sbt.texture_margin_top = 10
+		sbt.texture_margin_bottom = 16
+		_button_styles[style_key] = sbt
+
 func setup(eng: IdleEngine) -> void:
 	engine_ref = eng
 	if engine_ref != null:
@@ -157,8 +179,8 @@ func _draw() -> void:
 	var boost_txt = "BOOST 2X"
 	if engine_ref.boost_duration > 0:
 		boost_txt = "BOOST %.1fS" % engine_ref.boost_duration
-	_draw_button(Rect2(700, 45, 140, 32), boost_txt, Color(1.0, 0.76, 0.03, 1.0), Color.BLACK)
-	_draw_button(Rect2(850, 45, 140, 32), "WARP 1H", Color(0.30, 0.69, 0.31, 1.0), Color.WHITE)
+	_draw_button(Rect2(700, 45, 140, 32), boost_txt, "yellow", Color.BLACK)
+	_draw_button(Rect2(850, 45, 140, 32), "WARP 1H", "green", Color.WHITE)
 
 	# 2. Right Management Window Frame
 	var panel_rect = Rect2(530, 95, 475, 635)
@@ -169,8 +191,8 @@ func _draw() -> void:
 	var tabs = ["LAHAN", "UPGRADE", "MANDOR", "PRESTASI", "FESTIVAL"]
 	for i in range(tabs.size()):
 		var tab_x = 535 + i * 88
-		var btn_color = Color(0.20, 0.35, 0.45, 1.0) if i != active_tab else Color(0.30, 0.69, 0.31, 1.0)
-		_draw_button(Rect2(tab_x, 98, 82, 30), tabs[i], btn_color, Color.WHITE)
+		var tab_style = "blue" if i != active_tab else "green"
+		_draw_button(Rect2(tab_x, 98, 82, 30), tabs[i], tab_style, Color.WHITE)
 
 	# Active Tab Content
 	match active_tab:
@@ -193,8 +215,8 @@ func _draw() -> void:
 func _draw_lahan_tab() -> void:
 	# Buy Mode Toggle Button
 	var buy_str = "BUY 1X" if not buy_max_mode else "BUY MAX"
-	var buy_color = Color(0.30, 0.35, 0.40, 1.0) if not buy_max_mode else Color(1.0, 0.76, 0.03, 1.0)
-	_draw_button(Rect2(545, 133, 130, 26), buy_str, buy_color, Color.BLACK if buy_max_mode else Color.WHITE)
+	var buy_style = "grey" if not buy_max_mode else "yellow"
+	_draw_button(Rect2(545, 133, 130, 26), buy_str, buy_style, Color.BLACK if buy_max_mode else Color.WHITE)
 
 	var bizs = engine_ref.businesses
 	var bal = engine_ref.wallet.balance()
@@ -222,8 +244,8 @@ func _draw_lahan_tab() -> void:
 			cost = b.cost()
 			buy_txt = "+1 LVL (%.1fP)" % cost
 
-		var btn_clr = Color(0.30, 0.69, 0.31, 1.0) if bal >= cost else Color(0.30, 0.35, 0.40, 1.0)
-		_draw_button(Rect2(830, card_y + 22, 150, 50), buy_txt, btn_clr, Color.WHITE)
+		var btn_style = "green" if bal >= cost else "grey"
+		_draw_button(Rect2(830, card_y + 22, 150, 50), buy_txt, btn_style, Color.WHITE)
 
 func _draw_upgrade_tab() -> void:
 	var upgs = engine_ref.upgrades
@@ -237,8 +259,8 @@ func _draw_upgrade_tab() -> void:
 		draw_string(ThemeDB.fallback_font, Vector2(555, card_y + 48), u.description, HORIZONTAL_ALIGNMENT_LEFT, -1, 11, Color(0.8, 0.8, 0.8, 1.0))
 
 		var txt = "TERBELI" if u.is_purchased else ("BELI %.1fP" % u.cost)
-		var clr = Color(0.20, 0.35, 0.45, 1.0) if u.is_purchased else (Color(1.0, 0.76, 0.03, 1.0) if bal >= u.cost else Color(0.30, 0.35, 0.40, 1.0))
-		_draw_button(Rect2(830, card_y + 18, 150, 46), txt, clr, Color.BLACK if not u.is_purchased else Color.WHITE)
+		var style = "blue" if u.is_purchased else ("yellow" if bal >= u.cost else "grey")
+		_draw_button(Rect2(830, card_y + 18, 150, 46), txt, style, Color.BLACK if not u.is_purchased else Color.WHITE)
 
 func _draw_mandor_tab() -> void:
 	var mgrs = engine_ref.managers
@@ -252,8 +274,8 @@ func _draw_mandor_tab() -> void:
 		draw_string(ThemeDB.fallback_font, Vector2(555, card_y + 48), m.description, HORIZONTAL_ALIGNMENT_LEFT, -1, 11, Color(0.8, 0.8, 0.8, 1.0))
 
 		var txt = "DIREKRUT" if m.is_hired else ("REKRUT %.1fP" % m.cost)
-		var clr = Color(0.20, 0.35, 0.45, 1.0) if m.is_hired else (Color(1.0, 0.76, 0.03, 1.0) if bal >= m.cost else Color(0.30, 0.35, 0.40, 1.0))
-		_draw_button(Rect2(830, card_y + 18, 150, 46), txt, clr, Color.BLACK if not m.is_hired else Color.WHITE)
+		var style = "blue" if m.is_hired else ("yellow" if bal >= m.cost else "grey")
+		_draw_button(Rect2(830, card_y + 18, 150, 46), txt, style, Color.BLACK if not m.is_hired else Color.WHITE)
 
 func _draw_prestasi_tab() -> void:
 	var achs = engine_ref.achievements
@@ -266,8 +288,8 @@ func _draw_prestasi_tab() -> void:
 		draw_string(ThemeDB.fallback_font, Vector2(555, card_y + 48), a.description, HORIZONTAL_ALIGNMENT_LEFT, -1, 11, Color(0.8, 0.8, 0.8, 1.0))
 
 		var txt = "TERCAPAI" if a.is_unlocked else "BELUM"
-		var clr = Color(0.30, 0.69, 0.31, 1.0) if a.is_unlocked else Color(0.30, 0.35, 0.40, 1.0)
-		_draw_button(Rect2(830, card_y + 18, 150, 46), txt, clr, Color.WHITE)
+		var style = "green" if a.is_unlocked else "grey"
+		_draw_button(Rect2(830, card_y + 18, 150, 46), txt, style, Color.WHITE)
 
 func _draw_festival_tab() -> void:
 	draw_rect(Rect2(545, 140, 445, 450), Color(0.08, 0.11, 0.07, 1.0), true)
@@ -283,11 +305,14 @@ func _draw_festival_tab() -> void:
 	draw_string(ThemeDB.fallback_font, Vector2(560, 295), "KLAIM ANGEL BARU: +%d" % claimable, HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color(1.0, 0.76, 0.03, 1.0))
 
 	var txt = "KLAIM +%d ANGEL" % claimable if claimable > 0 else "PROGRES BELUM CUKUP"
-	var clr = Color(1.0, 0.76, 0.03, 1.0) if claimable > 0 else Color(0.30, 0.35, 0.40, 1.0)
-	_draw_button(Rect2(570, 360, 400, 60), txt, clr, Color.BLACK if claimable > 0 else Color.WHITE)
+	var style = "yellow" if claimable > 0 else "grey"
+	_draw_button(Rect2(570, 360, 400, 60), txt, style, Color.BLACK if claimable > 0 else Color.WHITE)
 
-func _draw_button(rect: Rect2, label: String, bg_color: Color, txt_color: Color) -> void:
-	draw_rect(rect, bg_color, true)
-	draw_rect(rect, Color.WHITE, false, 1.0)
+func _draw_button(rect: Rect2, label: String, style: String, txt_color: Color) -> void:
+	if _button_styles.has(style):
+		draw_style_box(_button_styles[style], rect)
+	else:
+		draw_rect(rect, Color(0.3, 0.3, 0.3, 1.0), true)
+		draw_rect(rect, Color.WHITE, false, 1.0)
 	var text_pos = Vector2(rect.position.x + (rect.size.x / 2.0) - (label.length() * 3.5), rect.position.y + (rect.size.y / 2.0) + 4)
 	draw_string(ThemeDB.fallback_font, text_pos, label, HORIZONTAL_ALIGNMENT_LEFT, -1, 12, txt_color)
