@@ -1,0 +1,141 @@
+{
+  "businesses": [
+    {
+      "id": "corn",
+      "name": "Kebun Jagung",
+      "base_cost": 4.0,
+      "cost_multiplier": 1.15,
+      "base_income": 1.0,
+      "duration_ms": 1000,
+      "is_automated": false
+    },
+    {
+      "id": "wheat",
+      "name": "Ladang Gandum",
+      "base_cost": 20.0,
+      "cost_multiplier": 1.15,
+      "base_income": 4.0,
+      "duration_ms": 3000,
+      "is_automated": true
+    },
+    {
+      "id": "livestock",
+      "name": "Peternakan Sapi",
+      "base_cost": 100.0,
+      "cost_multiplier": 1.15,
+      "base_income": 20.0,
+      "duration_ms": 6000,
+      "is_automated": true
+    },
+    {
+      "id": "greenhouse",
+      "name": "Rumah Kaca Organik",
+      "base_cost": 500.0,
+      "cost_multiplier": 1.15,
+      "base_income": 120.0,
+      "duration_ms": 12000,
+      "is_automated": false
+    },
+    {
+      "id": "processing",
+      "name": "Pabrik Pengolahan Tani",
+      "base_cost": 2500.0,
+      "cost_multiplier": 1.15,
+      "base_income": 600.0,
+      "duration_ms": 24000,
+      "is_automated": false
+    }
+  ],
+  "upgrades": [
+    {
+      "id": "fertilizer_boost",
+      "name": "Pupuk Organik Super",
+      "description": "Meningkatkan Hasil Kebun Jagung 2x Lipat",
+      "cost": 15.0,
+      "target_business_id": "corn",
+      "revenue_multiplier": 2.0,
+      "speed_multiplier": 1.0
+    },
+    {
+      "id": "combine_harvester",
+      "name": "Mesin Panen Gandum",
+      "description": "Meningkatkan Kecepatan Panen Gandum 2x Lipat",
+      "cost": 50.0,
+      "target_business_id": "wheat",
+      "revenue_multiplier": 1.0,
+      "speed_multiplier": 2.0
+    },
+    {
+      "id": "premium_feed",
+      "name": "Pakan Sapi Nutrisi Tinggi",
+      "description": "Meningkatkan Hasil Peternakan Sapi 3x Lipat",
+      "cost": 250.0,
+      "target_business_id": "livestock",
+      "revenue_multiplier": 3.0,
+      "speed_multiplier": 1.0
+    },
+    {
+      "id": "drip_irrigation",
+      "name": "Irigasi Tetes Otomatis",
+      "description": "Meningkatkan Hasil Rumah Kaca 2x Lipat",
+      "cost": 1200.0,
+      "target_business_id": "greenhouse",
+      "revenue_multiplier": 2.0,
+      "speed_multiplier": 1.0
+    },
+    {
+      "id": "solar_processing",
+      "name": "Panel Surya Pabrik",
+      "description": "Meningkatkan Kecepatan Pabrik 2x Lipat",
+      "cost": 6000.0,
+      "target_business_id": "processing",
+      "revenue_multiplier": 1.0,
+      "speed_multiplier": 2.0
+    }
+  ],
+  "managers": [
+    {
+      "id": "corn_farmer",
+      "name": "Pak Petani Jagung",
+      "description": "Memanen Kebun Jagung secara otomatis terus-menerus",
+      "cost": 100.0,
+      "target_business_id": "corn"
+    },
+    {
+      "id": "greenhouse_tech",
+      "name": "Teknisi Rumah Kaca",
+      "description": "Memanen Rumah Kaca Organik secara otomatis",
+      "cost": 2500.0,
+      "target_business_id": "greenhouse"
+    }
+  ],
+  "achievements": [
+    {
+      "id": "first_harvest",
+      "name": "Panen Perdana",
+      "description": "Kumpulkan 100 Poin (Bonus +10% Pendapatan Global)",
+      "condition_type": "balance",
+      "target_business_id": "",
+      "target_value": 100.0,
+      "bonus_multiplier": 0.10
+    },
+    {
+      "id": "corn_master",
+      "name": "Raja Jagung",
+      "description": "Kebun Jagung Level 10 (Bonus +20% Hasil Jagung)",
+      "condition_type": "level",
+      "target_business_id": "corn",
+      "target_value": 10.0,
+      "bonus_multiplier": 0.20
+    },
+    {
+      "id": "wheat_master",
+      "name": "Tuan Tanah Gandum",
+      "description": "Ladang Gandum Level 10 (Bonus +20% Hasil Gandum)",
+      "condition_type": "level",
+      "target_business_id": "wheat",
+      "target_value": 10.0,
+      "bonus_multiplier": 0.20
+    }
+  ]
+}

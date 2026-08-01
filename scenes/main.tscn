@@ -1,0 +1,14 @@
+[gd_scene load_steps=4 format=3 uid="uid://d3m4a5i6n7s8"]
+
+[ext_resource type="Script" path="res://scripts/main.gd" id="1_main"]
+[ext_resource type="PackedScene" uid="uid://b1f2m3a4p5s6" path="res://scenes/farm_map.tscn" id="2_farmmap"]
+[ext_resource type="PackedScene" uid="uid://c7u8i9p0a1n2" path="res://scenes/ui_panel.tscn" id="3_uipanel"]
+
+[node name="Main" type="Node2D"]
+script = ExtResource("1_main")
+
+[node name="FarmMap" parent="." instance=ExtResource("2_farmmap")]
+
+[node name="CanvasLayer" type="CanvasLayer" parent="."]
+
+[node name="UIManager" parent="CanvasLayer" instance=ExtResource("3_uipanel")]
