@@ -10,6 +10,10 @@ var notification_msg: String = ""
 var notification_expiry: float = 0.0
 
 var floating_texts: Array = []
+var sparkles: Array = []
+
+const BOUNCE_DURATION := 0.18
+var _bounce_anim: Dictionary = {} # business_id -> remaining time
 
 const BUTTON_TEXTURE_PATHS := {
 	"green": "res://assets/kenney_ui-pack/PNG/Green/Default/button_rectangle_depth_gradient.png",
@@ -97,6 +101,29 @@ func _on_harvest_produced(biz_id: String, income: float) -> void:
 		"time": 1.2
 	})
 
+	for i in range(4):
+		sparkles.append({
+			"pos": pos,
+			"vel": Vector2(randf_range(-40.0, 40.0), randf_range(-90.0, -20.0)),
+			"life": 0.5,
+			"max_life": 0.5,
+		})
+
+func _trigger_bounce(business_id: String) -> void:
+	_bounce_anim[business_id] = BOUNCE_DURATION
+
+## Eased "pop" scale (1.0 = resting) for the icon of a just-purchased card.
+func _bounce_scale(business_id: String) -> float:
+	if not _bounce_anim.has(business_id):
+		return 1.0
+	var t: float = _bounce_anim[business_id] / BOUNCE_DURATION
+	return 1.0 + sin(t * PI) * 0.15
+
+func _scaled_rect(rect: Rect2, factor: float) -> Rect2:
+	var new_size := rect.size * factor
+	var new_pos := rect.position - (new_size - rect.size) / 2.0
+	return Rect2(new_pos, new_size)
+
 func _on_notification_emitted(msg: String) -> void:
 	set_notification(msg)
 
@@ -110,6 +137,20 @@ func _process(delta: float) -> void:
 			ft["alpha"] = ft["time"] / 1.2
 			active_list.append(ft)
 	floating_texts = active_list
+
+	var active_sparkles = []
+	for s in sparkles:
+		s["life"] -= delta
+		if s["life"] > 0:
+			s["pos"] += s["vel"] * delta
+			s["vel"] *= 0.9
+			active_sparkles.append(s)
+	sparkles = active_sparkles
+
+	for key in _bounce_anim.keys():
+		_bounce_anim[key] -= delta
+		if _bounce_anim[key] <= 0.0:
+			_bounce_anim.erase(key)
 
 	queue_redraw()
 
@@ -171,9 +212,11 @@ func _handle_ui_click(pos: Vector2) -> void:
 							var res = engine_ref.buy_upgrade_max_by_id(b_id)
 							if res["count"] > 0:
 								set_notification("MEMBELI +%d LEVEL %s (%.1fP)" % [res["count"], b_id, res["cost"]])
+								_trigger_bounce(b_id)
 						else:
 							if engine_ref.buy_upgrade_by_id(b_id):
 								set_notification("BERHASIL UPGRADE LEVEL " + b_id)
+								_trigger_bounce(b_id)
 
 		elif active_tab == 1: # Upgrades Tab
 			var upgs = engine_ref.upgrades
@@ -184,6 +227,7 @@ func _handle_ui_click(pos: Vector2) -> void:
 						_play_click()
 						if engine_ref.buy_upgrade_card_by_id(upgs[i].id):
 							set_notification("BERHASIL BELI UPGRADE: " + upgs[i].name)
+							_trigger_bounce(upgs[i].target_business_id)
 
 		elif active_tab == 2: # Managers Tab
 			var mgrs = engine_ref.managers
@@ -194,6 +238,7 @@ func _handle_ui_click(pos: Vector2) -> void:
 						_play_click()
 						if engine_ref.buy_manager_by_id(mgrs[i].id):
 							set_notification("BERHASIL REKRUT MANDOR: " + mgrs[i].name)
+							_trigger_bounce(mgrs[i].target_business_id)
 
 		elif active_tab == 4: # Festival Tab
 			if pos.y >= 360 and pos.y <= 420 and pos.x >= 570 and pos.x <= 970:
@@ -262,6 +307,11 @@ func _draw() -> void:
 		var c = Color(0.30, 0.69, 0.31, ft["alpha"])
 		draw_string(_font, ft["pos"], ft["text"], HORIZONTAL_ALIGNMENT_LEFT, -1, 14, c)
 
+	# Harvest Sparkle FX
+	for s in sparkles:
+		var sparkle_alpha: float = s["life"] / s["max_life"]
+		draw_circle(s["pos"], 3.0 * sparkle_alpha, Color(1.0, 0.9, 0.3, sparkle_alpha))
+
 func _draw_lahan_tab() -> void:
 	# Buy Mode Toggle Button
 	var buy_str = "BUY 1X" if not buy_max_mode else "BUY MAX"
@@ -276,7 +326,7 @@ func _draw_lahan_tab() -> void:
 		var card_y = 165 + i * 105
 		draw_rect(Rect2(545, card_y, 445, 95), Color(0.08, 0.11, 0.07, 1.0), true)
 
-		_draw_business_icon(b.id, Rect2(552, card_y + 12, 64, 64))
+		_draw_business_icon(b.id, _scaled_rect(Rect2(552, card_y + 12, 64, 64), _bounce_scale(b.id)))
 
 		var name_str = "%s (LVL %d)" % [b.name, b.level]
 		draw_string(_font, Vector2(625, card_y + 24), name_str, HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color.WHITE)
@@ -307,7 +357,7 @@ func _draw_upgrade_tab() -> void:
 		var card_y = 140 + i * 95
 		draw_rect(Rect2(545, card_y, 445, 82), Color(0.08, 0.11, 0.07, 1.0), true)
 
-		_draw_business_icon(u.target_business_id, Rect2(552, card_y + 15, 52, 52))
+		_draw_business_icon(u.target_business_id, _scaled_rect(Rect2(552, card_y + 15, 52, 52), _bounce_scale(u.target_business_id)))
 
 		draw_string(_font, Vector2(615, card_y + 24), "⚡ " + u.name, HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color(1.0, 0.76, 0.03, 1.0))
 		draw_string(_font, Vector2(615, card_y + 48), u.description, HORIZONTAL_ALIGNMENT_LEFT, -1, 11, Color(0.8, 0.8, 0.8, 1.0))
@@ -324,7 +374,7 @@ func _draw_mandor_tab() -> void:
 		var card_y = 140 + i * 95
 		draw_rect(Rect2(545, card_y, 445, 82), Color(0.08, 0.11, 0.07, 1.0), true)
 
-		_draw_business_icon(m.target_business_id, Rect2(552, card_y + 15, 52, 52))
+		_draw_business_icon(m.target_business_id, _scaled_rect(Rect2(552, card_y + 15, 52, 52), _bounce_scale(m.target_business_id)))
 
 		draw_string(_font, Vector2(615, card_y + 24), "👨‍🌾 " + m.name, HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color(0.55, 0.76, 0.29, 1.0))
 		draw_string(_font, Vector2(615, card_y + 48), m.description, HORIZONTAL_ALIGNMENT_LEFT, -1, 11, Color(0.8, 0.8, 0.8, 1.0))

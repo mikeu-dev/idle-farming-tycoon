@@ -47,7 +47,18 @@ func _tile_region(index: int) -> Rect2:
 	var y := row * (TILE_PX + TILE_SPACING)
 	return Rect2(x, y, TILE_PX, TILE_PX)
 
-func _process(_delta: float) -> void:
+var _displayed_progress: Dictionary = {} # business id -> smoothed progress ratio, for animated fill
+
+func _process(delta: float) -> void:
+	if engine_ref != null:
+		for zone in farm_zones:
+			var z_id: String = zone["id"]
+			for b in engine_ref.businesses:
+				if b.id == z_id:
+					var target: float = b.get_progress_ratio()
+					var current: float = _displayed_progress.get(z_id, 0.0)
+					_displayed_progress[z_id] = current + (target - current) * min(1.0, delta * 10.0)
+					break
 	queue_redraw()
 
 func _input(event: InputEvent) -> void:
@@ -110,8 +121,8 @@ func _draw() -> void:
 
 		draw_string(_font, Vector2(z_rect.position.x + 230, z_rect.position.y + 26), status_str, HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color.WHITE)
 
-		# Progress Bar
-		var prog_ratio = biz.get_progress_ratio()
+		# Progress Bar (smoothed toward the real ratio so the fill animates instead of snapping)
+		var prog_ratio = _displayed_progress.get(z_id, 0.0)
 		var bar_rect = Rect2(z_rect.position.x + 230, z_rect.position.y + 42, 235, 18)
 		draw_rect(bar_rect, Color(0.07, 0.09, 0.06, 1.0), true)
 		if prog_ratio > 0.0:
