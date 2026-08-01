@@ -2,6 +2,12 @@ extends Node2D
 
 class_name FarmMap
 
+# kenney_tiny-farm/Tilesheet.txt: 16x16px tiles, 1px spacing, 12 cols x 11 rows
+const TILE_PX := 16
+const TILE_SPACING := 1
+const TILEMAP_COLS := 12
+const SOIL_TILE_INDEX := 49 # plowed dirt tile (verified visually)
+
 var engine_ref: IdleEngine
 
 # Clickable farm zones
@@ -26,6 +32,17 @@ func _ready() -> void:
 
 func setup(eng: IdleEngine) -> void:
 	engine_ref = eng
+
+## Returns the source Rect2 (in pixels) of a 1-indexed tile within tilemap_packed.png,
+## computed from the sheet layout instead of loading 132 separate tile files.
+func _tile_region(index: int) -> Rect2:
+	var i := index - 1
+	var col := i % TILEMAP_COLS
+	@warning_ignore("integer_division")
+	var row := i / TILEMAP_COLS
+	var x := col * (TILE_PX + TILE_SPACING)
+	var y := row * (TILE_PX + TILE_SPACING)
+	return Rect2(x, y, TILE_PX, TILE_PX)
 
 func _process(_delta: float) -> void:
 	queue_redraw()
@@ -72,12 +89,16 @@ func _draw() -> void:
 		if z_rect.has_point(mouse_pos):
 			draw_rect(z_rect.grow(2), Color(1.0, 0.84, 0.0, 1.0), false, 2.0)
 
-		# Draw Soil Bed Base (Plowed Soil)
+		# Draw Soil Bed Base (Plowed Soil) — tiled texture from tiny-farm tilemap
+		var soil_src := _tile_region(SOIL_TILE_INDEX)
 		for row in range(2):
 			for col in range(4):
 				var tx = z_rect.position.x + 10 + col * 40
 				var ty = z_rect.position.y + 10 + row * 40
-				draw_rect(Rect2(tx, ty, 38, 38), Color(0.40, 0.26, 0.13, 1.0), true)
+				if farm_tilemap_tex != null:
+					draw_texture_rect_region(farm_tilemap_tex, Rect2(tx, ty, 38, 38), soil_src)
+				else:
+					draw_rect(Rect2(tx, ty, 38, 38), Color(0.40, 0.26, 0.13, 1.0), true)
 
 		# Zone Label & Level
 		var status_str = "%s (LVL %d)" % [biz.name, biz.level]
