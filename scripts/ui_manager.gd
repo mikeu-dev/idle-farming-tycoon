@@ -20,6 +20,12 @@ const BUTTON_TEXTURE_PATHS := {
 
 var _button_styles: Dictionary = {}
 
+const SFX_CLICK_PATH := "res://assets/kenney_ui-pack/Sounds/click-a.ogg"
+const SFX_SWITCH_PATH := "res://assets/kenney_ui-pack/Sounds/switch-a.ogg"
+
+var _sfx_click: AudioStreamPlayer
+var _sfx_switch: AudioStreamPlayer
+
 func _ready() -> void:
 	for style_key in BUTTON_TEXTURE_PATHS:
 		var path: String = BUTTON_TEXTURE_PATHS[style_key]
@@ -32,6 +38,23 @@ func _ready() -> void:
 		sbt.texture_margin_top = 10
 		sbt.texture_margin_bottom = 16
 		_button_styles[style_key] = sbt
+
+	_sfx_click = AudioStreamPlayer.new()
+	_sfx_switch = AudioStreamPlayer.new()
+	add_child(_sfx_click)
+	add_child(_sfx_switch)
+	if ResourceLoader.exists(SFX_CLICK_PATH):
+		_sfx_click.stream = load(SFX_CLICK_PATH)
+	if ResourceLoader.exists(SFX_SWITCH_PATH):
+		_sfx_switch.stream = load(SFX_SWITCH_PATH)
+
+func _play_click() -> void:
+	if _sfx_click.stream != null:
+		_sfx_click.play()
+
+func _play_switch() -> void:
+	if _sfx_switch.stream != null:
+		_sfx_switch.play()
 
 func setup(eng: IdleEngine) -> void:
 	engine_ref = eng
@@ -85,11 +108,13 @@ func _handle_ui_click(pos: Vector2) -> void:
 	# Header Buttons (Super Boost & Time Warp)
 	if pos.y >= 45 and pos.y <= 77:
 		if pos.x >= 700 and pos.x <= 840:
+			_play_click()
 			if engine_ref.trigger_super_boost():
 				set_notification("SUPER BOOST DIAKTIFKAN (2X SPEED 30S)")
 			else:
 				set_notification("POIN TIDAK CUKUP UNTUK SUPER BOOST (50P)")
 		elif pos.x >= 850 and pos.x <= 990:
+			_play_click()
 			if engine_ref.trigger_time_warp():
 				set_notification("TIME WARP DILAKUKAN (+1 JAM INCOME)")
 			else:
@@ -98,11 +123,14 @@ func _handle_ui_click(pos: Vector2) -> void:
 
 	# Tab Bar Clicks (x: 535-980, y: 95-128)
 	if pos.y >= 95 and pos.y <= 128 and pos.x >= 535:
+		var prev_tab := active_tab
 		if pos.x <= 620: active_tab = 0
 		elif pos.x <= 710: active_tab = 1
 		elif pos.x <= 800: active_tab = 2
 		elif pos.x <= 890: active_tab = 3
 		elif pos.x <= 980: active_tab = 4
+		if active_tab != prev_tab:
+			_play_switch()
 		return
 
 	# Right Panel Action Clicks
@@ -110,6 +138,7 @@ func _handle_ui_click(pos: Vector2) -> void:
 		if active_tab == 0: # Lahan Tab
 			# Toggle Buy Mode Button
 			if pos.y >= 133 and pos.y <= 159 and pos.x >= 545 and pos.x <= 675:
+				_play_click()
 				buy_max_mode = not buy_max_mode
 				set_notification("MODE BELI: " + ("BUY MAX" if buy_max_mode else "BUY 1X"))
 				return
@@ -119,6 +148,7 @@ func _handle_ui_click(pos: Vector2) -> void:
 				var card_y = 165 + i * 105
 				if pos.y >= card_y and pos.y <= card_y + 95:
 					if pos.x >= 830 and pos.x <= 980:
+						_play_click()
 						var b_id = bizs[i].id
 						if buy_max_mode:
 							var res = engine_ref.buy_upgrade_max_by_id(b_id)
@@ -134,6 +164,7 @@ func _handle_ui_click(pos: Vector2) -> void:
 				var card_y = 140 + i * 95
 				if pos.y >= card_y and pos.y <= card_y + 80:
 					if pos.x >= 830 and pos.x <= 980:
+						_play_click()
 						if engine_ref.buy_upgrade_card_by_id(upgs[i].id):
 							set_notification("BERHASIL BELI UPGRADE: " + upgs[i].name)
 
@@ -143,11 +174,13 @@ func _handle_ui_click(pos: Vector2) -> void:
 				var card_y = 140 + i * 95
 				if pos.y >= card_y and pos.y <= card_y + 80:
 					if pos.x >= 830 and pos.x <= 980:
+						_play_click()
 						if engine_ref.buy_manager_by_id(mgrs[i].id):
 							set_notification("BERHASIL REKRUT MANDOR: " + mgrs[i].name)
 
 		elif active_tab == 4: # Festival Tab
 			if pos.y >= 360 and pos.y <= 420 and pos.x >= 570 and pos.x <= 970:
+				_play_click()
 				if engine_ref.claim_prestige():
 					set_notification("FESTIVAL PANEN RAYA BERHASIL! ANGEL INVESTOR DIKLAIM!")
 				else:
