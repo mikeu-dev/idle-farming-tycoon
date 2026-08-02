@@ -134,6 +134,37 @@ func _draw_lock_icon(center: Vector2, size: float) -> void:
 	draw_rect(body_rect, Color(0.92, 0.87, 0.72, 1.0), true)
 	draw_arc(Vector2(center.x, body_rect.position.y), size * 0.32, PI, TAU, 16, Color(0.92, 0.87, 0.72, 1.0), size * 0.16)
 
+## Small circular badge popping over a tile corner, showing the field's level.
+func _draw_level_badge(top_left: Vector2, level: int) -> void:
+	var r := 16.0
+	var badge_center := top_left + Vector2(r, r)
+	draw_circle(badge_center, r, Color(0.20, 0.35, 0.55, 1.0))
+	draw_circle(badge_center, r, Color(0.05, 0.05, 0.05, 0.6), false, 2.0)
+	draw_string(_font, badge_center + Vector2(-9, 5), str(level), HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color.WHITE)
+
+## Small "automated" badge for fields that no longer need a tap.
+func _draw_auto_badge(center: Vector2) -> void:
+	draw_circle(center, 12.0, Color(0.35, 0.65, 0.85, 1.0))
+	draw_circle(center, 12.0, Color(0.05, 0.05, 0.05, 0.5), false, 2.0)
+	draw_string(_font, center + Vector2(-9, 4), "A", HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color.WHITE)
+
+## Floating call-to-action chip (e.g. "TANAM!") overlaid on the field, like a
+## collect prompt hovering over the object it applies to.
+func _draw_action_bubble(center: Vector2, text: String) -> void:
+	var w: float = 20.0 + text.length() * 8.0
+	var rect := Rect2(center.x - w / 2.0, center.y - 15.0, w, 30.0)
+	draw_rect(rect, Color(1.0, 0.80, 0.15, 0.95), true)
+	draw_rect(rect, Color(0.16, 0.10, 0.06, 1.0), false, 2.0)
+	draw_string(_font, Vector2(rect.position.x + 10, rect.position.y + 21), text, HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color(0.16, 0.10, 0.06, 1.0))
+
+## Wooden sign-style tag for locked fields, showing the unlock cost.
+func _draw_sign_badge(center: Vector2, text: String) -> void:
+	var w: float = 20.0 + text.length() * 7.0
+	var rect := Rect2(center.x - w / 2.0, center.y - 13.0, w, 26.0)
+	draw_rect(rect, Color(0.85, 0.68, 0.42, 1.0), true)
+	draw_rect(rect, Color(0.35, 0.22, 0.12, 1.0), false, 2.0)
+	draw_string(_font, Vector2(rect.position.x + 8, rect.position.y + 18), text, HORIZONTAL_ALIGNMENT_LEFT, -1, 11, Color(0.25, 0.15, 0.08, 1.0))
+
 func _business_icon_src(business_id: String) -> Array:
 	# Returns [texture, source_rect] for a business id.
 	match business_id:
@@ -166,42 +197,38 @@ func _draw() -> void:
 		if biz == null:
 			continue
 
-		var soil_rect := Rect2(z_rect.position, Vector2(z_rect.size.x, z_rect.size.y - 52))
-		var info_rect := Rect2(z_rect.position.x, soil_rect.position.y + soil_rect.size.y, z_rect.size.x, 52)
-
-		_draw_soil_patch(soil_rect)
-		draw_rect(info_rect, Color(0.30, 0.20, 0.12, 1.0), true)
+		_draw_soil_patch(z_rect)
 		draw_rect(z_rect, Color(0.16, 0.10, 0.06, 1.0), false, 3.0)
 
+		var center: Vector2 = z_rect.position + z_rect.size / 2.0
+
 		if not biz.is_owned():
-			draw_rect(soil_rect, Color(0.05, 0.05, 0.05, 0.55), true)
-			_draw_lock_icon(soil_rect.position + soil_rect.size / 2.0, 30.0)
-			draw_string(_font, Vector2(info_rect.position.x + 12, info_rect.position.y + 22), biz.name, HORIZONTAL_ALIGNMENT_LEFT, info_rect.size.x - 24, 13, Color.WHITE)
-			draw_string(_font, Vector2(info_rect.position.x + 12, info_rect.position.y + 42), "BELI DI TOKO", HORIZONTAL_ALIGNMENT_LEFT, info_rect.size.x - 24, 11, Color(0.85, 0.70, 0.45, 1.0))
+			draw_rect(z_rect, Color(0.05, 0.05, 0.05, 0.55), true)
+			_draw_lock_icon(center - Vector2(0, 14), 30.0)
+			_draw_sign_badge(Vector2(center.x, z_rect.position.y + z_rect.size.y - 22), "BELI %.0fP" % biz.cost())
 			continue
 
-		# Business icon, big and centered on the soil patch, with a tap-pop bounce.
+		# Business icon, big, in the upper part of the tile, with a tap-pop bounce.
 		var icon_data := _business_icon_src(z_id)
 		var icon_tex: Texture2D = icon_data[0]
+		var icon_center := Vector2(center.x, z_rect.position.y + z_rect.size.y * 0.42)
 		if icon_tex != null:
-			var base_icon_size := Vector2(88, 88) if z_id != "greenhouse" else Vector2(112, 82)
+			var base_icon_size := Vector2(84, 84) if z_id != "greenhouse" else Vector2(108, 78)
 			var icon_scale: float = _tap_scale(z_id)
 			var icon_size: Vector2 = base_icon_size * icon_scale
-			var icon_pos: Vector2 = soil_rect.position + soil_rect.size / 2.0 - icon_size / 2.0
-			draw_texture_rect_region(icon_tex, Rect2(icon_pos, icon_size), icon_data[1])
+			draw_texture_rect_region(icon_tex, Rect2(icon_center - icon_size / 2.0, icon_size), icon_data[1])
 
-		# Name + level
-		var name_str = "%s  LV.%d" % [biz.name, biz.level]
-		draw_string(_font, Vector2(info_rect.position.x + 12, info_rect.position.y + 20), name_str, HORIZONTAL_ALIGNMENT_LEFT, info_rect.size.x - 24, 13, Color.WHITE)
+		# Level badge, popping over the tile's top-left corner.
+		_draw_level_badge(z_rect.position + Vector2(2, 2), biz.level)
 
 		if biz.is_automated:
-			draw_string(_font, Vector2(info_rect.position.x + 12, info_rect.position.y + 36), "OTOMATIS", HORIZONTAL_ALIGNMENT_LEFT, -1, 10, Color(0.60, 0.80, 0.95, 1.0))
-		else:
-			draw_string(_font, Vector2(info_rect.position.x + 12, info_rect.position.y + 36), "KETUK UNTUK PANEN", HORIZONTAL_ALIGNMENT_LEFT, -1, 10, Color(1.0, 0.80, 0.30, 1.0))
+			_draw_auto_badge(Vector2(z_rect.position.x + z_rect.size.x - 18, z_rect.position.y + 18))
+		elif not biz.is_producing:
+			_draw_action_bubble(Vector2(center.x, z_rect.position.y + z_rect.size.y * 0.68), "TANAM!")
 
-		# Progress bar
+		# Progress bar, floating near the bottom of the soil (no separate info panel).
 		var prog_ratio: float = _displayed_progress.get(z_id, 0.0)
-		var bar_rect := Rect2(info_rect.position.x + 12, info_rect.position.y + 42, info_rect.size.x - 24, 8)
-		draw_rect(bar_rect, Color(0.12, 0.08, 0.05, 1.0), true)
+		var bar_rect := Rect2(z_rect.position.x + 20, z_rect.position.y + z_rect.size.y - 22, z_rect.size.x - 40, 8)
+		draw_rect(bar_rect, Color(0.10, 0.07, 0.05, 0.85), true)
 		if prog_ratio > 0.0:
 			draw_rect(Rect2(bar_rect.position, Vector2(bar_rect.size.x * prog_ratio, bar_rect.size.y)), Color(0.45, 0.80, 0.35, 1.0), true)
