@@ -63,6 +63,8 @@ const CARD_W := 696
 
 var farm_tilemap_tex: Texture2D
 var farmexp_tilemap_tex: Texture2D
+var _icon_arrow_up: Texture2D
+var _icon_star: Texture2D
 var _font: Font = ThemeDB.fallback_font
 
 func _ready() -> void:
@@ -72,6 +74,10 @@ func _ready() -> void:
 		farmexp_tilemap_tex = load("res://assets/kenney_pixel-platformer-farm-expansion/Tilemap/tilemap_packed.png")
 	if ResourceLoader.exists("res://assets/kenney_ui-pack/Font/Kenney Future.ttf"):
 		_font = load("res://assets/kenney_ui-pack/Font/Kenney Future.ttf")
+	if ResourceLoader.exists("res://assets/kenney_ui-pack/PNG/Yellow/Default/arrow_basic_n.png"):
+		_icon_arrow_up = load("res://assets/kenney_ui-pack/PNG/Yellow/Default/arrow_basic_n.png")
+	if ResourceLoader.exists("res://assets/kenney_ui-pack/PNG/Yellow/Default/star.png"):
+		_icon_star = load("res://assets/kenney_ui-pack/PNG/Yellow/Default/star.png")
 	for style_key in BUTTON_TEXTURE_PATHS:
 		var path: String = BUTTON_TEXTURE_PATHS[style_key]
 		if not ResourceLoader.exists(path):
@@ -334,11 +340,12 @@ func _draw_sheet() -> void:
 	draw_rect(Rect2(0, SHEET_Y, 720, 1280 - SHEET_Y), Color(0.30, 0.20, 0.12, 1.0), true)
 	draw_rect(Rect2(0, SHEET_Y, 720, 4), Color(1.0, 0.80, 0.15, 1.0), true)
 
-	var tabs = ["LAHAN", "UPGRADE", "MANDOR", "PRESTASI", "FESTIVAL"]
 	var tab_w: float = 720.0 / 5.0
-	for i in range(tabs.size()):
+	for i in range(5):
 		var tab_style = "blue" if i != active_tab else "green"
-		_draw_button(Rect2(i * tab_w + 3, SHEET_Y + 8, tab_w - 6, TAB_BAR_HEIGHT - 14), tabs[i], tab_style, Color.WHITE)
+		var tab_rect := Rect2(i * tab_w + 3, SHEET_Y + 8, tab_w - 6, TAB_BAR_HEIGHT - 14)
+		_draw_button(tab_rect, "", tab_style, Color.WHITE)
+		_draw_tab_icon(i, tab_rect.position + tab_rect.size / 2.0)
 
 	match active_tab:
 		0: _draw_lahan_tab()
@@ -451,6 +458,35 @@ func _draw_festival_tab() -> void:
 	var txt = "KLAIM +%d ANGEL" % claimable if claimable > 0 else "PROGRES BELUM CUKUP"
 	var style = "yellow" if claimable > 0 else "grey"
 	_draw_button(Rect2(CARD_X + 40, CONTENT_Y + 210, CARD_W - 80, 60), txt, style, Color.BLACK if claimable > 0 else Color.WHITE)
+
+func _draw_tab_icon(index: int, center: Vector2) -> void:
+	match index:
+		0: # Lahan
+			_draw_business_icon("corn", Rect2(center - Vector2(20, 20), Vector2(40, 40)))
+		1: # Upgrade
+			if _icon_arrow_up != null:
+				draw_texture_rect(_icon_arrow_up, Rect2(center - Vector2(16, 16), Vector2(32, 32)), false)
+		2: # Mandor
+			_draw_person_icon(center)
+		3: # Prestasi
+			if _icon_star != null:
+				draw_texture_rect(_icon_star, Rect2(center - Vector2(16, 16), Vector2(32, 32)), false)
+		4: # Festival
+			_draw_flag_icon(center)
+
+func _draw_person_icon(center: Vector2) -> void:
+	draw_circle(center + Vector2(0, -8), 7.0, Color.WHITE)
+	var body_points := PackedVector2Array([
+		center + Vector2(-9, 14), center + Vector2(9, 14), center + Vector2(6, -2), center + Vector2(-6, -2)
+	])
+	draw_colored_polygon(body_points, Color.WHITE)
+
+func _draw_flag_icon(center: Vector2) -> void:
+	draw_line(center + Vector2(-10, 14), center + Vector2(-10, -14), Color.WHITE, 3.0)
+	var flag_points := PackedVector2Array([
+		center + Vector2(-10, -14), center + Vector2(10, -8), center + Vector2(-10, -2)
+	])
+	draw_colored_polygon(flag_points, Color(1.0, 0.80, 0.15, 1.0))
 
 func _draw_business_icon(business_id: String, rect: Rect2) -> void:
 	if business_id == "greenhouse":
