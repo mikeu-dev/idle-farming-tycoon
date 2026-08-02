@@ -31,3 +31,6 @@ dist/
 .DS_Store
 Thumbs.db
 desktop.ini
+
+# Internal analysis/working notes (not project deliverables)
+docs/
