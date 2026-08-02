@@ -37,6 +37,20 @@ var farm_tilemap_tex: Texture2D
 var farmexp_tilemap_tex: Texture2D
 var _font: Font = ThemeDB.fallback_font
 
+# Decorative trees scattered around the field grid to sell "outdoor world"
+# rather than empty space between tiles. Positions picked by eye to sit in
+# the gaps between/around the grid (see _zone_rect for the grid math).
+# tile 16 = tall pine, tile 28 = round bush tree (both verified visually).
+var _trees := [
+	{"pos": Vector2(40, 110), "tile": 16, "scale": 1.1},
+	{"pos": Vector2(680, 130), "tile": 28, "scale": 1.0},
+	{"pos": Vector2(360, 96), "tile": 28, "scale": 0.8},
+	{"pos": Vector2(30, 470), "tile": 28, "scale": 1.0},
+	{"pos": Vector2(690, 500), "tile": 16, "scale": 1.15},
+	{"pos": Vector2(70, 660), "tile": 16, "scale": 0.9},
+	{"pos": Vector2(660, 680), "tile": 28, "scale": 1.05},
+]
+
 func _ready() -> void:
 	if ResourceLoader.exists("res://assets/kenney_tiny-farm/Tilemap/tilemap_packed.png"):
 		farm_tilemap_tex = load("res://assets/kenney_tiny-farm/Tilemap/tilemap_packed.png")
@@ -113,6 +127,31 @@ func _input(event: InputEvent) -> void:
 							_tap_bounce[zone["id"]] = TAP_BOUNCE_DURATION
 				break
 
+## A deterministic wobbly-edged blob (not a rectangle) so field patches read
+## as irregular ground rather than UI cards. seed_offset varies the shape.
+func _organic_polygon(center: Vector2, radius: Vector2, seed_offset: float) -> PackedVector2Array:
+	var points := PackedVector2Array()
+	var n := 12
+	for i in range(n):
+		var angle: float = TAU * i / n
+		var jitter: float = 0.86 + 0.14 * sin(angle * 3.0 + seed_offset) + 0.06 * cos(angle * 5.0 - seed_offset)
+		points.append(center + Vector2(cos(angle) * radius.x * jitter, sin(angle) * radius.y * jitter))
+	return points
+
+func _draw_grass_base(rect: Rect2, seed_offset: float) -> void:
+	var center: Vector2 = rect.position + rect.size / 2.0
+	var radius: Vector2 = rect.size / 2.0 + Vector2(18, 18)
+	var poly := _organic_polygon(center, radius, seed_offset)
+	draw_colored_polygon(poly, Color(0.24, 0.42, 0.18, 1.0))
+	var poly_inner := _organic_polygon(center, radius - Vector2(6, 6), seed_offset)
+	draw_colored_polygon(poly_inner, Color(0.32, 0.54, 0.24, 1.0))
+
+func _draw_tree(pos: Vector2, tile_index: int, tree_scale: float) -> void:
+	if farm_tilemap_tex == null:
+		return
+	var size := Vector2(40, 40) * tree_scale
+	draw_texture_rect_region(farm_tilemap_tex, Rect2(pos - size / 2.0, size), _tile_region(tile_index))
+
 func _draw_soil_patch(rect: Rect2) -> void:
 	var soil_src := _tile_region(SOIL_TILE_INDEX)
 	var tile_w := 26.0
@@ -185,7 +224,14 @@ func _draw() -> void:
 	if engine_ref == null:
 		return
 
-	for zone in farm_zones:
+	# Full-bleed grass so the world reads as one continuous field, not
+	# rectangles floating over empty space.
+	draw_rect(Rect2(0, HUD_HEIGHT, 720, SHEET_Y - HUD_HEIGHT), Color(0.29, 0.50, 0.22, 1.0), true)
+	for tree in _trees:
+		_draw_tree(tree["pos"], tree["tile"], tree["scale"])
+
+	for zone_i in range(farm_zones.size()):
+		var zone: Dictionary = farm_zones[zone_i]
 		var z_id: String = zone["id"]
 		var z_rect := _zone_rect(zone)
 
@@ -197,8 +243,8 @@ func _draw() -> void:
 		if biz == null:
 			continue
 
+		_draw_grass_base(z_rect, float(zone_i) * 1.7)
 		_draw_soil_patch(z_rect)
-		draw_rect(z_rect, Color(0.16, 0.10, 0.06, 1.0), false, 3.0)
 
 		var center: Vector2 = z_rect.position + z_rect.size / 2.0
 
