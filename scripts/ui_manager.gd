@@ -23,6 +23,7 @@ const BUTTON_TEXTURE_PATHS := {
 }
 
 var _button_styles: Dictionary = {}
+var _pill_style: StyleBoxFlat
 
 const SFX_CLICK_PATH := "res://assets/kenney_ui-pack/Sounds/click-a.ogg"
 const SFX_SWITCH_PATH := "res://assets/kenney_ui-pack/Sounds/switch-a.ogg"
@@ -82,6 +83,13 @@ func _ready() -> void:
 		sbt.texture_margin_top = 10
 		sbt.texture_margin_bottom = 16
 		_button_styles[style_key] = sbt
+
+	_pill_style = StyleBoxFlat.new()
+	_pill_style.bg_color = Color(0.08, 0.06, 0.05, 0.55)
+	_pill_style.corner_radius_top_left = 20
+	_pill_style.corner_radius_top_right = 20
+	_pill_style.corner_radius_bottom_left = 20
+	_pill_style.corner_radius_bottom_right = 20
 
 	_sfx_click = AudioStreamPlayer.new()
 	_sfx_switch = AudioStreamPlayer.new()
@@ -286,19 +294,29 @@ func _draw() -> void:
 		var sparkle_alpha: float = s["life"] / s["max_life"]
 		draw_circle(s["pos"], 3.0 * sparkle_alpha, Color(1.0, 0.9, 0.3, sparkle_alpha))
 
-func _draw_hud() -> void:
-	draw_rect(Rect2(0, 0, 720, HUD_HEIGHT), Color(0.30, 0.20, 0.12, 1.0), true)
-	draw_rect(Rect2(0, HUD_HEIGHT - 3, 720, 3), Color(0.16, 0.10, 0.06, 1.0), true)
+func _draw_currency_pill(rect: Rect2, badge_color: Color, value_text: String) -> void:
+	if _pill_style != null:
+		draw_style_box(_pill_style, rect)
+	else:
+		draw_rect(rect, Color(0.08, 0.06, 0.05, 0.55), true)
+	var badge_r: float = rect.size.y / 2.0 - 3.0
+	var badge_center: Vector2 = rect.position + Vector2(rect.size.y / 2.0, rect.size.y / 2.0)
+	draw_circle(badge_center, badge_r, badge_color)
+	draw_circle(badge_center, badge_r, Color(0, 0, 0, 0.25), false, 1.5)
+	var text_x: float = rect.position.x + rect.size.y + 4
+	draw_string(_font, Vector2(text_x, rect.position.y + rect.size.y / 2.0 + 6), value_text, HORIZONTAL_ALIGNMENT_LEFT, rect.size.x - rect.size.y - 10, 15, Color.WHITE)
 
-	draw_circle(Vector2(28, 30), 10.0, Color(1.0, 0.80, 0.15, 1.0))
-	draw_string(_font, Vector2(46, 36), "%.1f" % engine_ref.wallet.balance(), HORIZONTAL_ALIGNMENT_LEFT, -1, 20, Color.WHITE)
+func _draw_hud() -> void:
+	draw_rect(Rect2(0, 0, 720, HUD_HEIGHT), Color(0.16, 0.13, 0.16, 1.0), true)
+	draw_rect(Rect2(0, HUD_HEIGHT - 3, 720, 3), Color(0.08, 0.06, 0.09, 1.0), true)
+
+	_draw_currency_pill(Rect2(12, 12, 132, 40), Color(1.0, 0.80, 0.15, 1.0), "%.1f" % engine_ref.wallet.balance())
+	_draw_currency_pill(Rect2(154, 12, 96, 40), Color(0.62, 0.50, 0.90, 1.0), "%d" % engine_ref.angels)
 
 	var total_gps: float = 0.0
 	for b in engine_ref.businesses:
 		total_gps += b.get_gps()
-	var angel_bonus: float = float(engine_ref.angels) * 5.0
-	var status_str = "%.1f/DETIK  •  ANGEL %d (+%.0f%%)" % [total_gps, engine_ref.angels, angel_bonus]
-	draw_string(_font, Vector2(28, 58), status_str, HORIZONTAL_ALIGNMENT_LEFT, -1, 11, Color(0.85, 0.75, 0.60, 1.0))
+	draw_string(_font, Vector2(12, 66), "%.1f POIN/DETIK" % total_gps, HORIZONTAL_ALIGNMENT_LEFT, -1, 10, Color(0.75, 0.70, 0.78, 1.0))
 
 	var boost_txt = "BOOST"
 	if engine_ref.boost_duration > 0:
